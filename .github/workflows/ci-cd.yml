@@ -23,7 +23,7 @@ jobs:
       image_tag: ${{ steps.set_outputs.outputs.image_tag }}
 
     env:
-      VERSION_TAG: v2
+      VERSION_TAG: v3
 
     steps:
       # 1. Checkout del código del repositorio
@@ -394,7 +394,7 @@ jobs:
           echo "Running smoke tests against: $APP_BASE_URL"
           sleep 30 # Espera prudencial
           pytest tests/test_smoke_app.py # Ejecutar las pruebas de humo
-          
+
   rollback-on-failure:
     needs: smoke-test-prod
     if: failure() # Se ejecuta solo si el job anterior falla
