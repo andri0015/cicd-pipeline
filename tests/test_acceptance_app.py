@@ -76,7 +76,7 @@ def find_elements(browser):
         ("5.5", "0", "factorial", "Error: El factorial solo acepta números enteros"),
         ("-5", "0", "factorial", "Error: El factorial no acepta números negativos"),
         ("2.718281828459045", "0", "logaritmo_natural", "Resultado: 1.0"),
-        ("0", "0", "logaritmo_natural", "Error: El logaritmo natural solo acepta números positivos"),
+        ("0", "0", "logaritmo_natural", "Error: El logaritmo naturales solo acepta números positivos"),
     ],
 )
 def test_calculadora(browser, num1, num2, operacion, resultado_esperado):
