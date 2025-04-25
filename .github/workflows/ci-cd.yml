@@ -22,6 +22,9 @@ jobs:
       repo_name: ${{ steps.set_outputs.outputs.repo_name }}
       image_tag: ${{ steps.set_outputs.outputs.image_tag }}
 
+    env:
+      VERSION_TAG: v2
+
     steps:
       # 1. Checkout del código del repositorio
       - name: Checkout code
@@ -107,7 +110,8 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:${{ env.VERSION_TAG }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ github.event.repository.name }}:prod
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -150,7 +154,7 @@ jobs:
       - name: Deploy CloudFormation Staging Stack
         run: |
           # Reconstruir la URI de la imagen usando el secreto y las salidas separadas
-          IMAGE_URI="${{ secrets.DOCKERHUB_USERNAME }}/${{ needs.build-test-publish.outputs.repo_name }}:${{ needs.build-test-publish.outputs.image_tag }}"
+          IMAGE_URI="${{ secrets.DOCKERHUB_USERNAME }}/${{ needs.build-test-publish.outputs.repo_name }}:prod"
           echo "Deploying Image URI: $IMAGE_URI" # Log para verificar (el username se ocultará aquí)
 
           aws cloudformation deploy \
@@ -286,7 +290,7 @@ jobs:
       - name: Deploy CloudFormation Production Stack
         run: |
           # Reconstruir la URI de la imagen usando el secreto y las salidas separadas
-          IMAGE_URI="${{ secrets.DOCKERHUB_USERNAME }}/${{ needs.build-test-publish.outputs.repo_name }}:${{ needs.build-test-publish.outputs.image_tag }}"
+          IMAGE_URI="${{ secrets.DOCKERHUB_USERNAME }}/${{ needs.build-test-publish.outputs.repo_name }}:prod"
           echo "Deploying Image URI: $IMAGE_URI" # Log para verificar
 
           aws cloudformation deploy \
@@ -390,6 +394,32 @@ jobs:
           echo "Running smoke tests against: $APP_BASE_URL"
           sleep 30 # Espera prudencial
           pytest tests/test_smoke_app.py # Ejecutar las pruebas de humo
+          
+  rollback-on-failure:
+    needs: smoke-test-prod
+    if: failure() # Se ejecuta solo si el job anterior falla
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Retag and redeploy previous image
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          PREVIOUS_TAG="v2"  # 👈 Cambia esto al tag al que quieras hacer rollback
+
+          IMAGE_NAME="${DOCKERHUB_USERNAME}/${{ github.event.repository.name }}"
+
+          echo "Rolling back to $IMAGE_NAME:$PREVIOUS_TAG"
+
+          echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+          docker pull $IMAGE_NAME:$PREVIOUS_TAG
+          docker tag $IMAGE_NAME:$PREVIOUS_TAG $IMAGE_NAME:prod
+          docker push $IMAGE_NAME:prod
+
 
 
 
