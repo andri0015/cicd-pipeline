@@ -23,7 +23,7 @@ jobs:
       image_tag: ${{ steps.set_outputs.outputs.image_tag }}
 
     env:
-      VERSION_TAG: v5
+      VERSION_TAG: v6
 
     steps:
       # 1. Checkout del código del repositorio
@@ -409,7 +409,7 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
         run: |
-          PREVIOUS_TAG="v4"
+          PREVIOUS_TAG="v5"
           IMAGE_NAME="${DOCKERHUB_USERNAME}/${{ github.event.repository.name }}"
           echo "Rolling back to $IMAGE_NAME:$PREVIOUS_TAG"
           echo "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
