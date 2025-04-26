@@ -23,7 +23,7 @@ jobs:
       image_tag: ${{ steps.set_outputs.outputs.image_tag }}
 
     env:
-      VERSION_TAG: v3
+      VERSION_TAG: v4
 
     steps:
       # 1. Checkout del código del repositorio
