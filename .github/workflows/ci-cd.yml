@@ -397,7 +397,7 @@ jobs:
 
   rollback-on-failure:
     needs: smoke-test-prod
-    if: failure() # Se ejecuta solo si el job anterior falla
+    if: failure() 
     runs-on: ubuntu-latest
 
     steps:
